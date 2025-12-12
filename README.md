@@ -350,7 +350,7 @@ dealing with LLVM’s PHI-nodes". I suppose one could infer that they may be tak
 # Prologue, Epilogue and Stack
 Both the function prologue and epilogue are preserved. The prologue executes before `VM_ENTER`, and the epilogue executes after `VM_EXIT`. This is for a important reason: unlike VMP, Griffin doesn’t have a virtual stack. Instead, it uses the stack space that would have been allocated for the original function. The `VSP` is set to the `RSP` value from above the `Context`, as shown below:
 
-<img width="1071" height="601" alt="Diagrama sem nome drawio (6)" src="https://github.com/user-attachments/assets/5921a062-95b1-4acc-85ab-25c5e0a4ca7d" />
+<img width="1071" height="601" alt="517787308-5921a062-95b1-4acc-85ab-25c5e0a4ca7d" src="https://github.com/user-attachments/assets/ea6c45c7-5d30-472d-a018-57320cd01d3b" />
 
 *Here we assume that `mFunc` is a function with only one basic block(the entry one). The lifted version is of course an illustration.*
 
@@ -399,7 +399,8 @@ To handle this call, Griffin will jump to a stub that looks like this (although,
 
 This makes it so that when the call is made, both the stack and register state are, from the callee (`sub_8C670`) perspective, structured exactly as they would be if the function had never been obfuscated.
 
-<img width="460" height="579" alt="vm_call drawio (12)" src="https://github.com/user-attachments/assets/347b9484-4f0b-4b37-a48c-ca14e86b7951" />
+
+<img width="460" height="579" alt="518268870-347b9484-4f0b-4b37-a48c-ca14e86b7951" src="https://github.com/user-attachments/assets/644c5b57-9eb7-425e-a763-200ac80bb0c7" />
 
 *Here we assume that `sub_8C670` takes six arguments: four passed in registers, with `arg_1` and `arg_2` placed on the stack. Notice that, at the point that `sub_8C670` is called, relative to RSP, both stack arguments are exactly where they would have been had `mFunc` never been virtualized. Likewise, the four register arguments hold the same values they would have in the original `mFunc`.*
 
@@ -511,7 +512,7 @@ Griffin, like most bin2bin obfuscators, creates a separate section to store the 
 
 Griffin handles this, I believe, by concretizing the VIP at the beginning of each lifted basic block with the address of the original basic block then applying the delta as explained [here](https://github.com/Mowokuma/Griffin-notes/blob/a78e39574e696c8633ce0f620ccbbbf6c8e4df5e/README.md?plain=1#L224) to get the address:
 
-<img width="1537" height="356" alt="Diagrama sem nome drawio (8)" src="https://github.com/user-attachments/assets/3ea25560-ffa4-4957-aed6-6c266895f495" />
+<img width="1537" height="356" alt="519406442-3ea25560-ffa4-4957-aed6-6c266895f495" src="https://github.com/user-attachments/assets/9e7747e6-bf06-45c6-b567-256548c74aee" />
 
 # SEH support
 Griffin support's SEH; to understand how, let's start considering a random function that has try/except block:
@@ -554,18 +555,19 @@ mVirtualizedFunc:
 ```
 Whenever Griffin is about to enter the scope of a try block, for example, it will jump to its corresponding gate. The gate then transfers control to the first basic-block function or stub of the try block. To exit from the scope, Griffin will write the next location to rax, push the return address and ret. In the image below, we can see a scope enter, exit and the subsequent entry into another one:
 
-<img width="940" height="551" alt="Diagrama sem nome drawio (9)" src="https://github.com/user-attachments/assets/df56c422-9c28-49fd-89e8-5e463cfb85bd" />
+<img width="940" height="551" alt="524469324-df56c422-9c28-49fd-89e8-5e463cfb85bd" src="https://github.com/user-attachments/assets/2b8d2740-25af-4bf9-a011-19bc1d78cfb6" />
 
    
 So, how this solves our problem? 
 
 First, both the basic-block functions and the stubs have an additional `UWOP_ALLOC_LARGE` entry in their `UnwindInfo` structure, on top of the normal compiler-emitted unwind data. This `UWOP_ALLOC_LARGE` entry is responsible for adjusting RSP to skip over the `Context` during stack unwinding.
 
-<img width="756" height="124" alt="Diagrama sem nome drawio (10)" src="https://github.com/user-attachments/assets/91381437-3238-4dca-9692-75fd196d0a03" />
+<img width="756" height="124" alt="524508473-91381437-3238-4dca-9692-75fd196d0a03" src="https://github.com/user-attachments/assets/3022ee9b-015a-4cf0-bff5-ce7fa60a0258" />
 
 Furthermore, if you pay attention, you’ll notice that Griffin overwrites the return address immediately after entering the try-block gate, using `pop qword ptr [rsp+238h]`. So, if a exception occour, the stack will unwind back to the return address and the RIP will end up on  the `jmp rax` instruction, right after the try-block gate call. At this point, Griffin was already careful enough to emit a `C_SCOPE_TABLE` that encapsulates the try block-gate and that have the `Handler` field pointing to `mHandler` RVA.
 
-<img width="650" height="364" alt="Diagrama sem nome drawio (12)" src="https://github.com/user-attachments/assets/73e3f775-9994-46cd-8d05-78b8f655c0dd" />
+<img width="650" height="364" alt="524977619-73e3f775-9994-46cd-8d05-78b8f655c0dd (1)" src="https://github.com/user-attachments/assets/9cc351ca-121c-415d-86a5-17f23bfb659a" />
 
-After handler execution, in this particular case, since it returns `EXCEPTION_EXECUTE_HANDLER`, execution will be dispatched to the `except_block_0_gate` call therefore entering the exception-block scope. 
+
+After the handler execution, in this particular case, since it returns `EXCEPTION_EXECUTE_HANDLER`, execution will be dispatched to the `except_block_0_gate` call therefore entering the exception-block scope. 
 
