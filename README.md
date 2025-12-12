@@ -6,7 +6,7 @@ This blogpost will try to provide an overview of how Griffin operates and its co
 # Griffin
 Some routines in `stub.dll` are obfuscated using what the community refers to as Griffin. In the version I have, at least five routines are obfuscated, including the `KiUserExceptionDispatcher` hook. 
 
-<img width="893" height="429" alt="sea" src="https://github.com/user-attachments/assets/228504a0-42d7-4b05-9678-1a78ab1f1780" />
+<img width="893" height="429" alt="507250980-228504a0-42d7-4b05-9678-1a78ab1f1780" src="https://github.com/user-attachments/assets/ed5060f8-9390-4e56-b938-139f3d4b6c9b" />
 
 *Here is part of a basic block from a function obfuscated with Griffin: a sea of bitwise operations that screams MBA is Griffin's signature.*
 
